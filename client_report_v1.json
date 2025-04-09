@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Bio-Me/Schemas/refs/heads/main/client_report_v1.json",
+  "$defs": {
+    "sampleIdSchema": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9]*.[a-zA-Z0-9]*.[0-9a-f]{8}$"
+    },
+    "dateSchema": {
+      "type": "string",
+      "pattern": "^\\d{4}-[01]\\d-[0-3]\\d$"
+    },
+    "UUIDSchema": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "productSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "enum": [
+            "PMP Vaginal Microbiome Health - Core",
+            "PMP Skin Microbiome"
+          ]
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v\\d+.\\d+$"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ]
+    },
+    "measurementResultSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "Microbial genome equivalents",
+            "Estimated bacterial load",
+            "Human genome equivalents"
+          ]
+        },
+        "method": {
+          "enum": [
+            "qPCR"
+          ]
+        },
+        "target": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": [
+                "bacteria",
+                "fungi",
+                "gene"
+              ]
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "name"
+          ]
+        },
+        "unit" : {
+          "enum": [
+            "copies",
+            "copies per ul"
+          ]
+        },
+        "details" : {
+          "enum": [
+            "per swab",
+            "per volume of extracted DNA solution"
+          ]
+        },
+        "status": {
+          "enum": [
+            "pass",
+            "low confidence",
+            "IPC fail",
+            "Image QC fail",
+            "Amplification fail"
+          ]
+        }
+      }
+    },
+    "communityStateTypeAnalysisSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "Community State Type"
+        },
+        "assignment_method": {
+          "enum": [
+            "Valencia2020"
+          ]
+        },
+        "value": {
+          "enum": [
+            "I",
+            "II",
+            "III",
+            "IV",
+            "V"
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "assignment_method",
+        "value"
+      ]
+    }
+  },
+  "properties": {
+    "schema": {
+      "type": "string",
+      "description": "URL to JSON schema"
+    },
+    "product": {
+      "$ref": "#/$defs/productSchema"
+    },
+    "sample_id": {
+      "$ref": "#/$defs/sampleIdSchema",
+      "description": "Sample id assigned by Bio-Me."
+    },
+    "id": {
+      "$ref": "#/$defs/UUIDSchema",
+      "description": "Opaque unique identifier of the report."
+    },
+    "sample_receipt_date": {
+      "$ref": "#/$defs/dateSchema",
+      "description": "Date when Bio-Me received the sample. 'YYYY-MM-DD' formated."
+    },
+    "measurements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/communityStateTypeAnalysisSchema"
+      }
+    }
+  },
+  "analyses": {
+    "type": "array",
+    "items": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/communityStateTypeAnalysisSchema"
+        }
+      ]
+    }
+  }
+},
+"required": [
+  "product",
+  "sample_id",
+  "sample_receipt_date",
+  "id"
+]
+}
