@@ -14,6 +14,82 @@
       "type": "string",
       "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
     },
+    "targetInfoSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "bacteria",
+            "fungi",
+            "gene"
+          ]
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "name"
+      ]
+    },
+    "resultSwabQuantificationSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "quantification"
+        },
+        "quantity": {
+          "const": "copies per swab"
+        },
+        "unit": {
+          "const": "#"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "quantity",
+        "unit",
+        "value"
+      ]
+    },
+    "resultDensityQuantificationSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "quantification"
+        },
+        "quantity": {
+          "const": "copies per volume of extracted DNA solution"
+        },
+        "unit": {
+          "const": "# per ul"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "quantity",
+        "unit",
+        "value"
+      ]
+    },
+    "resultBelowReliableDetectionSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "below reliable detection"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
     "productSchema": {
       "type": "object",
       "properties": {
@@ -49,35 +125,7 @@
           ]
         },
         "target": {
-          "type": "object",
-          "properties": {
-            "type": {
-              "enum": [
-                "bacteria",
-                "fungi",
-                "gene"
-              ]
-            },
-            "name": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "type",
-            "name"
-          ]
-        },
-        "unit" : {
-          "enum": [
-            "copies",
-            "copies per ul"
-          ]
-        },
-        "details" : {
-          "enum": [
-            "per swab",
-            "per volume of extracted DNA solution"
-          ]
+          "$ref": "#/$defs/targetInfoSchema"
         },
         "status": {
           "enum": [
@@ -87,8 +135,43 @@
             "Image QC fail",
             "Amplification fail"
           ]
+        },
+        "result": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/resultSwabQuantificationSchema"
+            },
+            {
+              "$ref": "#/$defs/resultDensityQuantificationSchema"
+            },
+            {
+              "$ref": "#/$defs/resultBelowReliableDetectionSchema"
+            }
+          ]
         }
-      }
+      },
+      "if": {
+        "properties": {
+          "status": {
+            "const": "pass"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "type",
+          "method",
+          "target",
+          "status",
+          "result"
+        ]
+      },
+      "required": [
+        "type",
+        "method",
+        "target",
+        "status"
+      ]
     },
     "communityStateTypeAnalysisSchema": {
       "type": "object",
@@ -141,25 +224,24 @@
     "measurements": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/communityStateTypeAnalysisSchema"
+        "$ref": "#/$defs/measurementResultSchema"
+      }
+    },
+    "analyses": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/communityStateTypeAnalysisSchema"
+          }
+        ]
       }
     }
   },
-  "analyses": {
-    "type": "array",
-    "items": {
-      "oneOf": [
-        {
-          "$ref": "#/$defs/communityStateTypeAnalysisSchema"
-        }
-      ]
-    }
-  }
-},
-"required": [
-  "product",
-  "sample_id",
-  "sample_receipt_date",
-  "id"
-]
+  "required": [
+    "product",
+    "sample_id",
+    "sample_receipt_date",
+    "id"
+  ]
 }
