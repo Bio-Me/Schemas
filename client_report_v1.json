@@ -14,82 +14,6 @@
       "type": "string",
       "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
     },
-    "targetInfoSchema": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "enum": [
-            "bacteria",
-            "fungi",
-            "gene"
-          ]
-        },
-        "name": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "type",
-        "name"
-      ]
-    },
-    "resultSwabQuantificationSchema": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "const": "quantification"
-        },
-        "quantity": {
-          "const": "copies per swab"
-        },
-        "unit": {
-          "const": "#"
-        },
-        "value": {
-          "type": "number"
-        }
-      },
-      "required": [
-        "type",
-        "quantity",
-        "unit",
-        "value"
-      ]
-    },
-    "resultDensityQuantificationSchema": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "const": "quantification"
-        },
-        "quantity": {
-          "const": "copies per volume of extracted DNA solution"
-        },
-        "unit": {
-          "const": "# per ul"
-        },
-        "value": {
-          "type": "number"
-        }
-      },
-      "required": [
-        "type",
-        "quantity",
-        "unit",
-        "value"
-      ]
-    },
-    "resultBelowReliableDetectionSchema": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "const": "below reliable detection"
-        }
-      },
-      "required": [
-        "type"
-      ]
-    },
     "productSchema": {
       "type": "object",
       "properties": {
@@ -109,82 +33,203 @@
         "version"
       ]
     },
-    "measurementResultSchema": {
-      "type": "object",
+    "targetSubSchema": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/targetBacteriaFungiSubSchema"
+        },
+        {
+          "$ref": "#/$defs/target16SSubSchema"
+        },
+        {
+          "$ref": "#/$defs/targetRNasePSubSchema"
+        }
+      ]
+    },
+    "targetBacteriaFungiSubSchema": {
       "properties": {
-        "type": {
+        "targetOutput": {
+          "const": "microbial genome equivalents"
+        },
+        "targetGroup": {
           "enum": [
-            "Microbial genome equivalents",
-            "Estimated bacterial load",
-            "Human genome equivalents"
+            "bacteria",
+            "fungi"
           ]
         },
-        "method": {
-          "enum": [
-            "qPCR"
-          ]
+        "targetName": {
+          "type": "string"
+        }
+      }
+    },
+    "target16SSubSchema": {
+      "properties": {
+        "targetOutput": {
+          "const": "estimated bacterial load"
         },
-        "target": {
-          "$ref": "#/$defs/targetInfoSchema"
+        "targetGroup": {
+          "const": "gene"
         },
-        "status": {
-          "enum": [
-            "pass",
-            "low confidence",
-            "IPC fail",
-            "Image QC fail",
-            "Amplification fail"
-          ]
+        "targetName": {
+          "const": "16S"
+        }
+      }
+    },
+    "targetRNasePSubSchema": {
+      "properties": {
+        "targetOutput": {
+          "const": "human genome equivalents"
         },
-        "result": {
-          "oneOf": [
+        "targetGroup": {
+          "const": "gene"
+        },
+        "targetName": {
+          "const": "RNaseP"
+        }
+      }
+    },
+    "quantificationUnitInterpretationSubSchema": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/quantificationUnitInterpretationPerSwabSubSchema"
+        },
+        {
+          "$ref": "#/$defs/quantificationUnitInterpretationPeruLSubSchema"
+        }
+      ]
+    },
+    "quantificationUnitInterpretationPerSwabSubSchema": {
+      "properties": {
+        "quantificationInterpretation": {
+          "const": "copies per swab"
+        },
+        "quantificationUnit": {
+          "const": "#"
+        }
+      }
+    },
+    "quantificationUnitInterpretationPeruLSubSchema": {
+      "properties": {
+        "quantificationInterpretation": {
+          "const": "copies per volume of extracted DNA solution"
+        },
+        "quantificationUnit": {
+          "const": "# per uL"
+        }
+      }
+    },
+    "measurementSchema": {
+      "allOf": [
+        {
+          "properties": {
+            "type": {
+              "const": "Measurement"
+            },
+            "protocol": {
+              "enum": [
+                "NA"
+              ]
+            }
+          }
+        },
+        {
+          "$ref": "#/$defs/targetSubSchema"
+        },
+        {
+          "$ref": "#/$defs/quantificationUnitInterpretationSubSchema"
+        },
+        {
+          "anyOf": [
             {
-              "$ref": "#/$defs/resultSwabQuantificationSchema"
+              "description": "failed measurement",
+              "properties": {
+                "measurementStatus": {
+                  "enum": [
+                    "IPC failure",
+                    "image control failure",
+                    "amplification control failure"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "measurementStatus",
+                "protocol",
+                "targetOutput",
+                "targetGroup",
+                "targetName"
+              ]
             },
             {
-              "$ref": "#/$defs/resultDensityQuantificationSchema"
-            },
-            {
-              "$ref": "#/$defs/resultBelowReliableDetectionSchema"
+              "properties": {
+                "measurementStatus": {
+                  "const": "pass"
+                },
+                "quantificationRangeUpperLimit": {
+                  "type": "number"
+                },
+                "quantificationRangeLowerLimit": {
+                  "type": "number"
+                }
+              },
+              "anyOf": [
+                {
+                  "description": "successful measurement - quantification in range",
+                  "properties": {
+                    "quantificationStatus": {
+                      "const": "within quantification range"
+                    },
+                    "quantificationValue": {
+                      "type": "number"
+                    }
+                  }
+                },
+                {
+                  "description": "successful measurement - quantification out of range",
+                  "properties": {
+                    "quantificationStatus": {
+                      "enum": [
+                        "above quantification range",
+                        "below quantification range"
+                      ]
+                    },
+                    "quantificationValue": {
+                      "type": "null"
+                    }
+                  }
+                }
+              ],
+              "required": [
+                "type",
+                "measurementStatus",
+                "protocol",
+                "targetOutput",
+                "targetGroup",
+                "targetName",
+                "quantificationStatus",
+                "quantificationValue",
+                "quantificationUnits",
+                "quantificationInterpretation",
+                "quantificationRangeLowerLimit",
+                "quantificationRangeUpperLimit"
+              ]
             }
           ]
         }
-      },
-      "if": {
-        "properties": {
-          "status": {
-            "const": "pass"
-          }
-        }
-      },
-      "then": {
-        "required": [
-          "type",
-          "method",
-          "target",
-          "status",
-          "result"
-        ]
-      },
-      "required": [
-        "type",
-        "method",
-        "target",
-        "status"
       ]
     },
     "communityStateTypeAnalysisSchema": {
       "type": "object",
       "properties": {
         "type": {
-          "const": "Community State Type"
+          "const": "CommunityStateType"
         },
-        "assignment_method": {
+        "analysis": {
           "enum": [
-            "Valencia2020"
+            "Community state type assignment [Valencia2020]"
           ]
         },
-        "value": {
+        "result": {
           "enum": [
             "I",
             "II",
@@ -195,19 +240,22 @@
         }
       },
       "required": [
-        "type",
-        "assignment_method",
-        "value"
+        "analysis",
+        "result"
       ]
     }
   },
   "properties": {
+    "type": {
+      "const": "BioMeSampleReport"
+    },
     "schema": {
       "type": "string",
-      "description": "URL to JSON schema"
+      "description": "URL to JSON Schema."
     },
     "product": {
-      "$ref": "#/$defs/productSchema"
+      "$ref": "#/$defs/productSchema",
+      "description": "Bio-Me product name."
     },
     "sample_id": {
       "$ref": "#/$defs/sampleIdSchema",
@@ -215,7 +263,7 @@
     },
     "id": {
       "$ref": "#/$defs/UUIDSchema",
-      "description": "Opaque unique identifier of the report."
+      "description": "Opaque unique identifier for the report."
     },
     "sample_receipt_date": {
       "$ref": "#/$defs/dateSchema",
@@ -224,7 +272,7 @@
     "measurements": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/measurementResultSchema"
+        "$ref": "#/$defs/measurementSchema"
       }
     },
     "analyses": {
@@ -239,9 +287,12 @@
     }
   },
   "required": [
+    "type",
     "product",
     "sample_id",
     "sample_receipt_date",
-    "id"
-  ]
+    "id",
+    "measurements"
+  ],
+  "additionalProperties": false
 }
