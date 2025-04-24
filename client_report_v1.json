@@ -122,12 +122,11 @@
       "allOf": [
         {
           "properties": {
-            "type": {
-              "const": "Measurement"
-            },
             "protocol": {
               "enum": [
-                "NA"
+                "NA",
+                "Extr.v1+VagPMP.v1",
+                "VagPMP.v1"
               ]
             }
           }
@@ -143,6 +142,9 @@
             {
               "description": "failed measurement",
               "properties": {
+                "type": {
+                  "const": "FailedMeasurement"
+                },
                 "measurementStatus": {
                   "enum": [
                     "IPC failure",
@@ -162,6 +164,9 @@
             },
             {
               "properties": {
+                "type": {
+                  "const": "SuccessfulMeasurement"
+                },
                 "measurementStatus": {
                   "const": "pass"
                 },
